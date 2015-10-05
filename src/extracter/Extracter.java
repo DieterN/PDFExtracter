@@ -19,19 +19,20 @@ public class Extracter {
 	
 	public static void main(String[] args){
 		
-		List<String> pdfFiles = extractPDFsFromFolder();
+		List<String> pdfFiles = extractPDFsFromFolder(inputFolder);
 		
 		try{
 			for(String pdf : pdfFiles){
-				System.out.println("Reading " + pdf);
-				PdfReader reader = new PdfReader(inputFolder + pdf);
-				System.out.println(inputFolder + pdf);
+				System.out.println(pdf);
+				int index = pdf.lastIndexOf("\\");
+				String pdfName = pdf.substring(index+1, pdf.indexOf(".pdf"));
+				System.out.println("Reading " + pdfName);
+				PdfReader reader = new PdfReader(pdf);
 				if(reader.getNumberOfPages() < extractPageNr){
 					System.out.println(pdf + " has not enough pages to extract. Skipped to next pdf!");
 					continue;
 				}
-				String outFile = outputFolder + pdf.substring(0, pdf.indexOf(".pdf"))
-	                + "-" + String.format("%03d", extractPageNr) + ".pdf";
+				String outFile = outputFolder + pdfName + "-" + String.format("%03d", extractPageNr) + ".pdf";
 	            System.out.println ("Writing " + outFile);
 	            Document document = new Document(reader.getPageSizeWithRotation(1));
 	            PdfCopy writer = new PdfCopy(document, new FileOutputStream(outFile));
@@ -52,12 +53,17 @@ public class Extracter {
 	 * 
 	 * @return
 	 */
-	private static List<String> extractPDFsFromFolder() {
-		File folder = new File(inputFolder);
+	private static List<String> extractPDFsFromFolder(String folderName) {
+		File folder = new File(folderName);
 		List<String> pdfFiles = new ArrayList<String>();
 		
 		for(final File fileEntry : folder.listFiles()){
-			pdfFiles.add(fileEntry.getName());
+			if(fileEntry.isDirectory()){
+				pdfFiles.addAll(extractPDFsFromFolder(fileEntry.getAbsolutePath()));
+			}
+			else{
+				pdfFiles.add(fileEntry.getAbsolutePath());
+			}
 		}
 		return pdfFiles;
 	}
